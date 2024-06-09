@@ -1,0 +1,32 @@
+#!/usr/bin/expect
+
+set order_value 9
+
+spawn ./client
+expect "Connected to the server"
+
+# Function to send "BUY" command with incremented order value
+proc send_buy_command {} {
+    global order_value
+    send "BUY $order_value 100\r"
+    incr order_value
+    expect "Connected to the server"
+    send_user "BUY $order_value 100\n"
+}
+
+# Function to continuously wait for "*Order executed!" message
+proc wait_for_order_executed {} {
+    expect {
+        "*Order executed!*" {
+            send_buy_command
+            wait_for_order_executed
+        }
+        eof {
+            send_user "Connection closed\n"
+        }
+    }
+}
+
+send_buy_command
+wait_for_order_executed
+ 
